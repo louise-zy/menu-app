@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}用户登录 - 我的菜谱本{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3><i class="fas fa-user-circle me-2"></i>欢迎使用菜谱管理系统</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-center text-muted mb-4">
+                        每个用户都有独立的菜谱空间，请登录或注册账号
+                    </p>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('handle_login') }}">
+                        <div class="mb-3">
+                            <label for="user_id" class="form-label">
+                                <i class="fas fa-user me-1"></i>用户名
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="user_id" 
+                                   name="user_id" 
+                                   placeholder="请输入用户名（中文、英文、数字均可）"
+                                   required
+                                   maxlength="20">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                用户名将作为你的唯一标识，可以是中文、英文或数字
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="login" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>登录
+                            </button>
+                            <button type="submit" name="action" value="register" class="btn btn-outline-success">
+                                <i class="fas fa-user-plus me-2"></i>注册新用户
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <h6 class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>隐私说明
+                        </h6>
+                        <small class="text-muted">
+                            • 每个用户的菜谱完全独立，互不干扰<br>
+                            • 你的菜谱只有你自己能看到和管理<br>
+                            • 系统会记住你的登录状态
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-lightbulb me-1"></i>
+                    提示：建议使用容易记住的用户名，系统会自动保存登录状态
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 检查是否有保存的用户ID
+document.addEventListener('DOMContentLoaded', function() {
+    const savedUserId = localStorage.getItem('currentUserId');
+    if (savedUserId) {
+        document.getElementById('user_id').value = savedUserId;
+        
+        // 显示提示
+        const userInput = document.getElementById('user_id');
+        userInput.placeholder = `上次登录：${savedUserId}`;
+    }
+});
+
+// 成功登录后保存用户ID到localStorage
+function saveUserId() {
+    const userId = document.getElementById('user_id').value;
+    if (userId) {
+        localStorage.setItem('currentUserId', userId);
+    }
+}
+
+// 在表单提交时保存用户ID
+document.querySelector('form').addEventListener('submit', saveUserId);
+</script>
+{% endblock %} 

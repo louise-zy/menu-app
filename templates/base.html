@@ -68,7 +68,7 @@
     <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
+            <a class="navbar-brand" href="{% if user_id %}{{ url_for('index', user_id=user_id) }}{% else %}{{ url_for('login') }}{% endif %}">
                 <i class="fas fa-utensils me-2"></i>我的菜谱本
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -76,26 +76,48 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    {% if user_id %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">
+                        <a class="nav-link" href="{{ url_for('index', user_id=user_id) }}">
                             <i class="fas fa-home me-1"></i>首页
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_recipe') }}">
+                        <a class="nav-link" href="{{ url_for('add_recipe', user_id=user_id) }}">
                             <i class="fas fa-plus me-1"></i>添加菜谱
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('ingredients_filter') }}">
+                        <a class="nav-link" href="{{ url_for('ingredients_filter', user_id=user_id) }}">
                             <i class="fas fa-carrot me-1"></i>食材筛选
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('random_recipe') }}">
+                        <a class="nav-link" href="{{ url_for('random_recipe', user_id=user_id) }}">
                             <i class="fas fa-dice me-1"></i>随机推荐
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>{{ user_id }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('login') }}">
+                                <i class="fas fa-user-plus me-2"></i>切换用户
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><span class="dropdown-item-text">
+                                <small class="text-muted">当前用户：{{ user_id }}</small>
+                            </span></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>登录
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -120,9 +142,11 @@
     </div>
 
     <!-- 随机推荐按钮 -->
-    <a href="{{ url_for('random_recipe') }}" class="btn btn-primary random-btn" title="随机推荐一道菜">
+    {% if user_id %}
+    <a href="{{ url_for('random_recipe', user_id=user_id) }}" class="btn btn-primary random-btn" title="随机推荐一道菜">
         <i class="fas fa-dice"></i>
     </a>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}
