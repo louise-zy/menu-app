@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}按食材筛选菜谱 - 我的菜谱本{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-carrot me-2 text-primary"></i>按食材筛选菜谱
+            </h1>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>返回首页
+            </a>
+        </div>
+
+        <!-- 食材选择区域 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-square me-2"></i>选择你拥有的食材
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if grouped_ingredients %}
+                    <form method="POST" action="{{ url_for('ingredients_filter') }}">
+                        <!-- 手动输入食材 -->
+                        <div class="mb-4">
+                            <label for="custom_ingredients" class="form-label">
+                                <i class="fas fa-keyboard me-1"></i>手动输入食材
+                            </label>
+                            <input type="text" class="form-control" id="custom_ingredients" name="custom_ingredients" 
+                                   placeholder="输入食材名称，多个食材用逗号或空格分隔，如：西红柿, 鸡蛋, 葱"
+                                   value="{{ ', '.join(custom_ingredients) if custom_ingredients else '' }}">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>如果下方列表中没有你需要的食材，可以在这里手动输入
+                            </div>
+                        </div>
+
+                        <!-- 按字母分组的食材选择 -->
+                        <div class="mb-3">
+                            <h6><i class="fas fa-list me-1"></i>常用食材（按拼音字母分组）</h6>
+                        </div>
+                        
+                        {% for letter in grouped_ingredients.keys() | sort %}
+                            <div class="ingredient-group mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="text-primary mb-0">
+                                        <span class="badge bg-primary me-2">{{ letter }}</span>
+                                        <small class="text-muted">({{ grouped_ingredients[letter]|length }} 种食材)</small>
+                                    </h6>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                                            onclick="selectGroup('{{ letter }}')">
+                                        <i class="fas fa-check-double me-1"></i>全选{{ letter }}组
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    {% for ingredient in grouped_ingredients[letter] %}
+                                        <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="ingredients" value="{{ ingredient }}" 
+                                                       id="ingredient_{{ letter }}_{{ loop.index }}"
+                                                       {% if ingredient in selected_ingredients %}checked{% endif %}>
+                                                <label class="form-check-label" for="ingredient_{{ letter }}_{{ loop.index }}">
+                                                    <i class="fas fa-seedling me-1 text-success"></i>{{ ingredient }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- 快速操作按钮 -->
+                        <div class="quick-select-buttons mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted me-3">
+                                        <i class="fas fa-magic me-1"></i>快速操作：
+                                    </span>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="selectAll()">
+                                        <i class="fas fa-check-double me-1"></i>全选
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="clearAll()">
+                                        <i class="fas fa-times me-1"></i>清除全部
+                                    </button>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-search me-2"></i>查找菜谱
+                                    <span id="selected-count" class="badge bg-light text-dark ms-2">0</span>
+                                </button>
+                            </div>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-keyboard me-1"></i>提示：按 Ctrl+Enter 快速查找
+                                </small>
+                            </div>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        还没有任何菜谱，请先添加一些菜谱再使用食材筛选功能
+                        <div class="mt-3">
+                            <a href="{{ url_for('add_recipe') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>添加菜谱
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 筛选结果 -->
+        {% if selected_ingredients %}
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-utensils me-2"></i>筛选结果
+                    </h5>
+                    <small class="text-muted">
+                        选中食材：
+                        {% for ingredient in selected_ingredients %}
+                            <span class="badge bg-primary me-1">{{ ingredient }}</span>
+                        {% endfor %}
+                    </small>
+                </div>
+                <div class="card-body">
+                    {% if filtered_recipes %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            找到 {{ filtered_recipes|length }} 道菜谱包含你选择的食材！
+                        </div>
+                        
+                        <div class="row">
+                            {% for recipe in filtered_recipes %}
+                                <div class="col-lg-6 col-md-12 mb-3">
+                                    <div class="card recipe-card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title">
+                                                    <i class="fas fa-utensils me-2 text-primary"></i>{{ recipe.name }}
+                                                </h6>
+                                                <div class="text-end">
+                                                    <span class="badge bg-success">匹配 {{ recipe.match_count }}/{{ selected_ingredients|length }}</span>
+                                                    <small class="text-muted d-block">{{ recipe.match_percentage }}%</small>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 匹配的食材高亮显示 -->
+                                            <div class="mb-3">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-list me-1"></i>包含食材：
+                                                </small>
+                                                <div class="ingredient-preview">
+                                                    {% for ingredient in recipe.ingredients %}
+                                                        {% set is_selected = false %}
+                                                        {% for selected in selected_ingredients %}
+                                                            {% if selected.lower() in ingredient.lower() %}
+                                                                {% set is_selected = true %}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                        
+                                                        <span class="badge {% if is_selected %}bg-warning text-dark{% else %}bg-light text-dark{% endif %} me-1 mb-1">
+                                                            {% if is_selected %}<i class="fas fa-star me-1"></i>{% endif %}
+                                                            {{ ingredient }}
+                                                        </span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            
+                                            <p class="card-text">
+                                                <small class="text-muted">
+                                                    <i class="far fa-clock me-1"></i>{{ recipe.created_at }}
+                                                </small>
+                                            </p>
+                                        </div>
+                                        
+                                        <div class="card-footer bg-transparent border-top-0">
+                                            <a href="{{ url_for('view_recipe', recipe_id=recipe.id) }}" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>查看菜谱
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            没有找到包含这些食材的菜谱，试试选择其他食材吧！
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.ingredient-group {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fafafa;
+}
+
+.ingredient-group h6 {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.form-check-label:hover {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.quick-select-buttons {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+#custom_ingredients:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+</style>
+
+<script>
+function selectAll() {
+    const checkboxes = document.querySelectorAll('input[name="ingredients"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateSelectedCount();
+}
+
+function clearAll() {
+    const checkboxes = document.querySelectorAll('input[name="ingredients"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('custom_ingredients').value = '';
+    updateSelectedCount();
+}
+
+function selectGroup(letter) {
+    const groupCheckboxes = document.querySelectorAll(`input[id^="ingredient_${letter}_"]`);
+    groupCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checkedBoxes = document.querySelectorAll('input[name="ingredients"]:checked');
+    const customInput = document.getElementById('custom_ingredients').value.trim();
+    const customCount = customInput ? customInput.split(/[,，\s]+/).filter(x => x.trim()).length : 0;
+    
+    const totalCount = checkedBoxes.length + customCount;
+    const countElement = document.getElementById('selected-count');
+    countElement.textContent = totalCount;
+}
+
+// 监听复选框和输入框变化
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="ingredients"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    
+    const customInput = document.getElementById('custom_ingredients');
+    customInput.addEventListener('input', updateSelectedCount);
+    
+    // 初始化计数
+    updateSelectedCount();
+});
+
+// 添加键盘快捷键支持
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') {
+        document.querySelector('button[type="submit"]').click();
+    }
+});
+</script>
+{% endblock %} 

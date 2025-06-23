@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 我的菜谱本{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-book-open me-2 text-primary"></i>我的菜谱本
+                {% if recipes %}
+                    <small class="text-muted">(共 {{ recipes|length }} 道菜)</small>
+                {% endif %}
+            </h1>
+            <a href="{{ url_for('add_recipe') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>添加新菜谱
+            </a>
+        </div>
+
+        <!-- 搜索框和食材筛选 -->
+        <div class="row mb-4">
+            <div class="col-md-8 mx-auto">
+                <form method="GET" action="{{ url_for('index') }}">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control" name="search" 
+                               placeholder="搜索菜谱或材料..." value="{{ search_query }}">
+                        <input type="hidden" name="season" value="{{ season_filter or '' }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        {% if search_query %}
+                            <a href="{{ url_for('index', season=season_filter) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+                
+                <!-- 季节筛选 -->
+                <div class="d-flex justify-content-center mt-3 mb-2">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('index', search=search_query) }}" 
+                           class="btn btn-sm {% if not season_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            全部
+                        </a>
+                        <a href="{{ url_for('index', search=search_query, season='春季') }}" 
+                           class="btn btn-sm {% if season_filter == '春季' %}btn-success{% else %}btn-outline-success{% endif %}">
+                            🌸 春季
+                        </a>
+                        <a href="{{ url_for('index', search=search_query, season='夏季') }}" 
+                           class="btn btn-sm {% if season_filter == '夏季' %}btn-info{% else %}btn-outline-info{% endif %}">
+                            ☀️ 夏季
+                        </a>
+                        <a href="{{ url_for('index', search=search_query, season='秋季') }}" 
+                           class="btn btn-sm {% if season_filter == '秋季' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                            🍂 秋季
+                        </a>
+                        <a href="{{ url_for('index', search=search_query, season='冬季') }}" 
+                           class="btn btn-sm {% if season_filter == '冬季' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                            ❄️ 冬季
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 快捷入口 -->
+                <div class="text-center">
+                    <a href="{{ url_for('ingredients_filter') }}" class="btn btn-outline-success me-2">
+                        <i class="fas fa-carrot me-1"></i>按食材筛选
+                    </a>
+                    <a href="{{ url_for('seasonal_recommendation') }}" class="btn btn-outline-warning me-2">
+                        <i class="fas fa-leaf me-1"></i>应季推荐
+                    </a>
+                    <form method="POST" action="{{ url_for('batch_analyze_seasons') }}" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-info me-2" 
+                                onclick="return confirm('将为现有菜谱分析季节和中医养生信息，可能需要几分钟时间，确定继续吗？')">
+                            <i class="fas fa-yin-yang me-1"></i>养生分析
+                        </button>
+                    </form>
+                    <small class="text-muted">当前季节：<span class="badge bg-primary">{{ current_season }}</span></small>
+                </div>
+            </div>
+        </div>
+
+        {% if search_query and recipes %}
+            <div class="alert alert-info">
+                <i class="fas fa-search me-2"></i>搜索到 {{ recipes|length }} 道菜包含 "{{ search_query }}"
+            </div>
+        {% elif search_query and not recipes %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>没有找到包含 "{{ search_query }}" 的菜谱
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-primary ms-2">查看所有菜谱</a>
+            </div>
+        {% endif %}
+
+        <!-- 菜谱列表 -->
+        {% if recipes %}
+            <div class="row">
+                {% for recipe in recipes %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card recipe-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-utensils me-2 text-primary"></i>{{ recipe.name }}
+                            </h5>
+                            <p class="card-text text-muted">
+                                <small>
+                                    <i class="far fa-clock me-1"></i>{{ recipe.created_at }}
+                                </small>
+                            </p>
+                            
+                            <!-- 季节标签 -->
+                            {% if recipe.seasons %}
+                                <div class="mb-2">
+                                    {% for season in recipe.seasons %}
+                                        {% if season == '分析中...' %}
+                                            <span class="badge bg-warning text-dark me-1">
+                                                <i class="fas fa-spinner fa-spin me-1"></i>{{ season }}
+                                            </span>
+                                        {% elif season == '春季' %}
+                                            <span class="badge bg-success me-1">🌸 {{ season }}</span>
+                                        {% elif season == '夏季' %}
+                                            <span class="badge bg-info me-1">☀️ {{ season }}</span>
+                                        {% elif season == '秋季' %}
+                                            <span class="badge bg-warning me-1">🍂 {{ season }}</span>
+                                        {% elif season == '冬季' %}
+                                            <span class="badge bg-secondary me-1">❄️ {{ season }}</span>
+                                        {% elif season == '四季' %}
+                                            <span class="badge bg-primary me-1">🍽️ {{ season }}</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark me-1">{{ season }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- 材料预览 -->
+                            <div class="mb-3">
+                                <h6 class="text-muted">
+                                    <i class="fas fa-list me-1"></i>材料 ({{ recipe.ingredients|length }} 种)
+                                </h6>
+                                <div class="ingredient-preview">
+                                    {% for ingredient in recipe.ingredients[:3] %}
+                                        <span class="badge bg-light text-dark me-1">{{ ingredient }}</span>
+                                    {% endfor %}
+                                    {% if recipe.ingredients|length > 3 %}
+                                        <span class="text-muted">...</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- 制作步骤数量 -->
+                            {% if recipe.steps %}
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clipboard-list me-1"></i>共 {{ recipe.steps|length }} 个制作步骤
+                                    </small>
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="card-footer bg-transparent border-top-0">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('view_recipe', recipe_id=recipe.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>查看详情
+                                </a>
+                                <form method="POST" action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('确定要删除菜谱《{{ recipe.name }}》吗？')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash me-1"></i>删除
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {% if not search_query %}
+                <!-- 空状态 -->
+                <div class="text-center my-5">
+                    <div class="mb-4">
+                        <i class="fas fa-book-open text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h3 class="text-muted mb-3">还没有添加任何菜谱</h3>
+                    <p class="text-muted mb-4">开始记录你喜欢的菜谱，再也不用纠结吃什么了！</p>
+                    <a href="{{ url_for('add_recipe') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>添加第一道菜
+                    </a>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

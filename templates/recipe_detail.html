@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.name }} - 我的菜谱本{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- 菜谱标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5">
+                <i class="fas fa-utensils me-3 text-primary"></i>{{ recipe.name }}
+            </h1>
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-1"></i>返回列表
+                </a>
+                <form method="POST" action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" 
+                      style="display: inline;" 
+                      onsubmit="return confirm('确定要删除菜谱《{{ recipe.name }}》吗？')">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="fas fa-trash me-1"></i>删除菜谱
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 创建时间和季节信息 -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <small class="text-muted">
+                    <i class="far fa-clock me-1"></i>创建于 {{ recipe.created_at }}
+                </small>
+                
+                <!-- 季节标签 -->
+                {% if recipe.seasons %}
+                    <div>
+                        {% for season in recipe.seasons %}
+                            {% if season == '分析中...' %}
+                                <span class="badge bg-warning text-dark me-1">
+                                    <i class="fas fa-spinner fa-spin me-1"></i>{{ season }}
+                                </span>
+                            {% elif season == '春季' %}
+                                <span class="badge bg-success me-1">🌸 {{ season }}</span>
+                            {% elif season == '夏季' %}
+                                <span class="badge bg-info me-1">☀️ {{ season }}</span>
+                            {% elif season == '秋季' %}
+                                <span class="badge bg-warning me-1">🍂 {{ season }}</span>
+                            {% elif season == '冬季' %}
+                                <span class="badge bg-secondary me-1">❄️ {{ season }}</span>
+                            {% elif season == '四季' %}
+                                <span class="badge bg-primary me-1">🍽️ {{ season }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark me-1">{{ season }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- 材料清单 -->
+            <div class="col-lg-5 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>材料清单
+                            <span class="badge bg-light text-dark ms-2">{{ recipe.ingredients|length }} 种</span>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="ingredient-list">
+                            {% for ingredient in recipe.ingredients %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <span>{{ ingredient }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 制作步骤 -->
+            <div class="col-lg-7 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>制作步骤
+                            {% if recipe.steps %}
+                                <span class="badge bg-light text-dark ms-2">{{ recipe.steps|length }} 步</span>
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% if recipe.steps %}
+                            <div class="step-list">
+                                {% for step in recipe.steps %}
+                                    <div class="step-item mb-3 p-3 border-start border-4 border-success bg-light">
+                                        <div class="d-flex">
+                                            <div class="step-number me-3">
+                                                <span class="badge bg-success rounded-circle" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                                    {{ loop.index }}
+                                                </span>
+                                            </div>
+                                            <div class="step-content">
+                                                {{ step }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>暂无制作步骤
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 备注说明 -->
+        {% if recipe.notes %}
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-sticky-note me-2"></i>备注说明
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>{{ recipe.notes }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- 中医养生信息 -->
+        {% if recipe.wellness_info %}
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-yin-yang me-2"></i>中医养生解读
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- 推荐节气 -->
+                            {% if recipe.wellness_info.solar_term %}
+                                <div class="mb-3">
+                                    <h6 class="text-primary">
+                                        <i class="fas fa-calendar-alt me-2"></i>推荐节气
+                                    </h6>
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-leaf me-2"></i>{{ recipe.wellness_info.solar_term }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- 时令特色 -->
+                            {% if recipe.wellness_info.seasonal_feature %}
+                                <div class="mb-3">
+                                    <h6 class="text-primary">
+                                        <i class="fas fa-seedling me-2"></i>时令特色
+                                    </h6>
+                                    <div class="alert alert-secondary mb-0">
+                                        <i class="fas fa-star me-2"></i>{{ recipe.wellness_info.seasonal_feature }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- 黄帝内经解读 -->
+                            {% if recipe.wellness_info.tcm_theory %}
+                                <div class="mb-3">
+                                    <h6 class="text-primary">
+                                        <i class="fas fa-book-open me-2"></i>黄帝内经解读
+                                    </h6>
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="fas fa-quote-left me-2"></i>{{ recipe.wellness_info.tcm_theory }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- 养生提示 -->
+                            {% if recipe.wellness_info.health_tips %}
+                                <div class="mb-0">
+                                    <h6 class="text-primary">
+                                        <i class="fas fa-heart me-2"></i>养生提示
+                                    </h6>
+                                    <div class="alert alert-success mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>{{ recipe.wellness_info.health_tips }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- 底部操作栏 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                    <div>
+                        <a href="{{ url_for('random_recipe') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-dice me-1"></i>再来一道
+                        </a>
+                    </div>
+                    <div>
+                        <small class="text-muted">
+                            已收录菜谱 ID: {{ recipe.id }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 打印菜谱功能
+function printRecipe() {
+    window.print();
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}添加菜谱 - 我的菜谱本{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>添加新菜谱
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_recipe') }}">
+                    <!-- 菜名 -->
+                    <div class="mb-4">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-utensils me-1"></i>菜名 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="name" name="name" 
+                               placeholder="例如：红烧肉" required>
+                    </div>
+
+                    <!-- 材料 -->
+                    <div class="mb-4">
+                        <label for="ingredients" class="form-label">
+                            <i class="fas fa-list me-1"></i>材料清单 <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="ingredients" name="ingredients" rows="8" 
+                                  placeholder="请每行填写一种材料，例如：&#10;五花肉 500g&#10;冰糖 30g&#10;生抽 2勺&#10;老抽 1勺&#10;料酒 1勺&#10;葱 2根&#10;姜 3片&#10;八角 2个" required></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>每行填写一种材料，建议包含用量
+                        </div>
+                    </div>
+
+                    <!-- 制作步骤 -->
+                    <div class="mb-4">
+                        <label for="steps" class="form-label">
+                            <i class="fas fa-clipboard-list me-1"></i>制作步骤
+                        </label>
+                        <textarea class="form-control" id="steps" name="steps" rows="10" 
+                                  placeholder="请每行填写一个步骤，例如：&#10;1. 五花肉洗净切块，冷水下锅焯水&#10;2. 热锅放少量油，放入冰糖炒糖色&#10;3. 倒入肉块翻炒上色&#10;4. 加入生抽、老抽、料酒调色调味&#10;5. 加入葱段、姜片、八角&#10;6. 倒入开水没过肉块&#10;7. 大火烧开转小火炖1小时&#10;8. 最后大火收汁即可"></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>每行填写一个步骤，建议按顺序编号
+                        </div>
+                    </div>
+
+                    <!-- 备注 -->
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>备注说明
+                        </label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="可以添加一些小贴士、注意事项或口感描述等"></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>可选项，记录一些制作技巧或特别说明
+                        </div>
+                    </div>
+
+                    <!-- 按钮 -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>保存菜谱
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 添加示例按钮 -->
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-outline-info" onclick="fillExample()">
+                <i class="fas fa-lightbulb me-1"></i>填入示例菜谱
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fillExample() {
+    if (confirm('这将填入一个示例菜谱，确定要继续吗？')) {
+        document.getElementById('name').value = '红烧肉';
+        document.getElementById('ingredients').value = `五花肉 500g
+冰糖 30g
+生抽 2勺
+老抽 1勺
+料酒 1勺
+葱 2根
+姜 3片
+八角 2个
+桂皮 1小块
+香叶 2片`;
+        document.getElementById('steps').value = `1. 五花肉洗净切成3cm见方的块状，冷水下锅焯水去腥
+2. 热锅放少量油，小火放入冰糖炒制糖色至焦糖色
+3. 倒入焯好水的肉块，翻炒至每面都上色
+4. 加入生抽、老抽、料酒，翻炒均匀
+5. 放入葱段、姜片、八角、桂皮、香叶炒香
+6. 倒入开水没过肉块，大火烧开
+7. 转小火盖盖炖煮1小时左右至肉烂
+8. 最后开盖大火收汁，汤汁浓稠即可出锅`;
+        document.getElementById('notes').value = '炒糖色时火候很重要，糖色炒得好红烧肉色泽会很诱人。收汁时要不断翻动避免糊锅。';
+    }
+}
+</script>
+{% endblock %} 
