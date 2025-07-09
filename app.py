@@ -905,8 +905,27 @@ def api_ingredients():
     ingredients = get_all_ingredients(user_id)
     return jsonify(ingredients)
 
+@app.route('/health')
+def health_check():
+    """健康检查端点"""
+    return jsonify({
+        "status": "healthy", 
+        "service": "菜谱管理系统",
+        "version": "1.0.0"
+    })
+
 if __name__ == '__main__':
     # 生产环境配置
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
-    app.run(debug=debug_mode, host='0.0.0.0', port=port) 
+    
+    print(f"🚀 启动菜谱管理系统...")
+    print(f"📍 端口: {port}")
+    print(f"🔧 调试模式: {debug_mode}")
+    print(f"🌍 环境: {os.environ.get('FLASK_ENV', 'development')}")
+    
+    try:
+        app.run(debug=debug_mode, host='0.0.0.0', port=port)
+    except Exception as e:
+        print(f"❌ 启动失败: {e}")
+        raise 
