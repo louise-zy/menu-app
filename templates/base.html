@@ -68,7 +68,7 @@
     <!-- 导航栏 -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% if user_id %}{{ url_for('index', user_id=user_id) }}{% else %}{{ url_for('login') }}{% endif %}">
+            <a class="navbar-brand" href="{% if user_id %}{{ url_for('index') }}{% else %}{{ url_for('login') }}{% endif %}">
                 <i class="fas fa-utensils me-2"></i>我的菜谱本
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -78,22 +78,22 @@
                 <ul class="navbar-nav ms-auto">
                     {% if user_id %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index', user_id=user_id) }}">
+                        <a class="nav-link" href="{{ url_for('index') }}">
                             <i class="fas fa-home me-1"></i>首页
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_recipe', user_id=user_id) }}">
+                        <a class="nav-link" href="{{ url_for('add_recipe') }}">
                             <i class="fas fa-plus me-1"></i>添加菜谱
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('ingredients_filter', user_id=user_id) }}">
+                        <a class="nav-link" href="{{ url_for('ingredients_filter') }}">
                             <i class="fas fa-carrot me-1"></i>食材筛选
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('random_recipe', user_id=user_id) }}">
+                        <a class="nav-link" href="{{ url_for('random_recipe') }}">
                             <i class="fas fa-dice me-1"></i>随机推荐
                         </a>
                     </li>
@@ -102,6 +102,9 @@
                             <i class="fas fa-user-circle me-1"></i>{{ user_id }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>登出
+                            </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('login') }}">
                                 <i class="fas fa-user-plus me-2"></i>切换用户
                             </a></li>
@@ -143,7 +146,7 @@
 
     <!-- 随机推荐按钮 -->
     {% if user_id %}
-    <a href="{{ url_for('random_recipe', user_id=user_id) }}" class="btn btn-primary random-btn" title="随机推荐一道菜">
+    <a href="{{ url_for('random_recipe') }}" class="btn btn-primary random-btn" title="随机推荐一道菜">
         <i class="fas fa-dice"></i>
     </a>
     {% endif %}

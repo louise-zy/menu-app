@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 import json
 import os
 import random
@@ -219,7 +219,7 @@ def get_all_ingredients(user_id="default"):
     
     return grouped_ingredients
 
-def analyze_recipe_seasons_async(recipe_id, recipe_name, ingredients):
+def analyze_recipe_seasons_async(recipe_id, recipe_name, ingredients, user_id):
     """异步分析菜谱的适宜季节和养生功效"""
     print(f"🔄 开始异步分析菜谱: {recipe_name} (ID: {recipe_id})")
     
@@ -233,7 +233,7 @@ def analyze_recipe_seasons_async(recipe_id, recipe_name, ingredients):
             'tcm_theory': '根据食材特性进行基础分析',
             'health_tips': '请根据个人体质和季节变化适量食用'
         }
-        update_recipe_analysis(recipe_id, seasons, wellness_info)
+        update_recipe_analysis(recipe_id, seasons, wellness_info, user_id)
         return
     
     try:
@@ -282,7 +282,7 @@ def analyze_recipe_seasons_async(recipe_id, recipe_name, ingredients):
         print(f"解析得到季节: {seasons}")  # 调试用
         
         # 更新菜谱分析结果
-        update_recipe_analysis(recipe_id, seasons, wellness_info)
+        update_recipe_analysis(recipe_id, seasons, wellness_info, user_id)
         print(f"✅ 异步分析完成: {recipe_name}")
         
     except Exception as e:
@@ -295,13 +295,13 @@ def analyze_recipe_seasons_async(recipe_id, recipe_name, ingredients):
             'tcm_theory': '根据食材特性进行基础分析',
             'health_tips': '请根据个人体质和季节变化适量食用'
         }
-        update_recipe_analysis(recipe_id, seasons, wellness_info)
+        update_recipe_analysis(recipe_id, seasons, wellness_info, user_id)
         print(f"⚠️ 使用备用分析: {recipe_name}")
 
-def update_recipe_analysis(recipe_id, seasons, wellness_info):
+def update_recipe_analysis(recipe_id, seasons, wellness_info, user_id):
     """更新菜谱的分析结果"""
     try:
-        recipes = load_recipes()
+        recipes = load_recipes(user_id)
         
         # 查找对应的菜谱
         for recipe in recipes:
@@ -311,7 +311,7 @@ def update_recipe_analysis(recipe_id, seasons, wellness_info):
                 break
         
         # 保存更新后的数据
-        save_recipes(recipes)
+        save_recipes(recipes, user_id)
         print(f"📝 已更新菜谱分析结果: {recipe_id}")
         
     except Exception as e:
@@ -522,6 +522,14 @@ def login():
     """用户登录/注册页面"""
     return render_template('login.html')
 
+@app.route('/logout')
+def logout():
+    """用户登出"""
+    user_id = session.get('user_id', '未知用户')
+    session.clear()  # 清除所有session数据
+    flash(f'再见，{user_id}！已安全登出。', 'info')
+    return redirect(url_for('login'))
+
 @app.route('/login', methods=['POST'])
 def handle_login():
     """处理用户登录/注册"""
@@ -546,16 +554,26 @@ def handle_login():
         flash('用户不存在，请先注册！', 'error')
         return redirect(url_for('login'))
     
-    # 登录成功，重定向到主页
-    return redirect(url_for('index', user_id=user_id))
+    # 登录成功，将用户ID存储到session中
+    session['user_id'] = user_id
+    flash(f'欢迎回来，{user_id}！', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/')
 @app.route('/user/<user_id>')
 def index(user_id=None):
     """首页 - 显示所有菜谱"""
-    # 如果没有指定用户ID，重定向到登录页
+    # 优先使用session中的用户ID，如果没有再检查URL参数
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果仍然没有用户ID，重定向到登录页
     if user_id is None:
         return redirect(url_for('login'))
+    
+    # 如果从URL获取了用户ID，同时更新session（兼容性处理）
+    if 'user_id' not in session:
+        session['user_id'] = user_id
     
     recipes = load_recipes(user_id)
     search_query = request.args.get('search', '')
@@ -594,8 +612,17 @@ def index(user_id=None):
                          user_list=user_list)
 
 @app.route('/user/<user_id>/add', methods=['GET', 'POST'])
-def add_recipe(user_id):
+@app.route('/add', methods=['GET', 'POST'])
+def add_recipe(user_id=None):
     """添加新菜谱"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         ingredients = request.form.get('ingredients', '').strip()
@@ -644,13 +671,22 @@ def add_recipe(user_id):
         analysis_thread.start()
         
         flash(f'菜谱《{name}》添加成功！🍽️ 中医养生分析正在后台进行中，请稍后查看详情页面获取完整分析结果。', 'success')
-        return redirect(url_for('index', user_id=user_id))
+        return redirect(url_for('index'))
     
     return render_template('add_recipe.html', user_id=user_id)
 
 @app.route('/user/<user_id>/recipe/<int:recipe_id>')
-def view_recipe(user_id, recipe_id):
+@app.route('/recipe/<int:recipe_id>')
+def view_recipe(recipe_id, user_id=None):
     """查看单个菜谱详情"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     recipes = load_recipes(user_id)
     recipe = None
     
@@ -661,25 +697,43 @@ def view_recipe(user_id, recipe_id):
     
     if not recipe:
         flash('菜谱不存在！', 'error')
-        return redirect(url_for('index', user_id=user_id))
+        return redirect(url_for('index'))
     
     return render_template('recipe_detail.html', recipe=recipe, user_id=user_id)
 
 @app.route('/user/<user_id>/random')
-def random_recipe(user_id):
+@app.route('/random')
+def random_recipe(user_id=None):
     """随机推荐菜谱"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     recipes = load_recipes(user_id)
     
     if not recipes:
         flash('还没有添加任何菜谱！', 'info')
-        return redirect(url_for('index', user_id=user_id))
+        return redirect(url_for('index'))
     
     random_recipe = random.choice(recipes)
-    return redirect(url_for('view_recipe', user_id=user_id, recipe_id=random_recipe['id']))
+    return redirect(url_for('view_recipe', recipe_id=random_recipe['id']))
 
 @app.route('/user/<user_id>/seasonal')
-def seasonal_recommendation(user_id):
+@app.route('/seasonal')
+def seasonal_recommendation(user_id=None):
     """应季菜谱推荐"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     recipes = load_recipes(user_id)
     current_season = get_current_season()
     
@@ -692,16 +746,25 @@ def seasonal_recommendation(user_id):
     
     if not seasonal_recipes:
         flash(f'还没有适合{current_season}的菜谱！', 'info')
-        return redirect(url_for('index', user_id=user_id))
+        return redirect(url_for('index'))
     
     # 随机选择一个应季菜谱
     random_seasonal = random.choice(seasonal_recipes)
     flash(f'🌸 为您推荐{current_season}应季菜谱！', 'success')
-    return redirect(url_for('view_recipe', user_id=user_id, recipe_id=random_seasonal['id']))
+    return redirect(url_for('view_recipe', recipe_id=random_seasonal['id']))
 
 @app.route('/user/<user_id>/batch_analyze_seasons', methods=['POST'])
-def batch_analyze_seasons(user_id):
+@app.route('/batch_analyze_seasons', methods=['POST'])
+def batch_analyze_seasons(user_id=None):
     """批量分析现有菜谱的季节和养生功效（管理功能）"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     recipes = load_recipes(user_id)
     updated_count = 0
     
@@ -732,11 +795,20 @@ def batch_analyze_seasons(user_id):
     else:
         flash('所有菜谱都已有完整的季节和养生信息！', 'info')
     
-    return redirect(url_for('index', user_id=user_id))
+    return redirect(url_for('index'))
 
 @app.route('/user/<user_id>/delete/<int:recipe_id>', methods=['POST'])
-def delete_recipe(user_id, recipe_id):
+@app.route('/delete/<int:recipe_id>', methods=['POST'])
+def delete_recipe(recipe_id, user_id=None):
     """删除菜谱"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     recipes = load_recipes(user_id)
     
     for i, recipe in enumerate(recipes):
@@ -749,11 +821,20 @@ def delete_recipe(user_id, recipe_id):
     else:
         flash('菜谱不存在！', 'error')
     
-    return redirect(url_for('index', user_id=user_id))
+    return redirect(url_for('index'))
 
 @app.route('/user/<user_id>/ingredients', methods=['GET', 'POST'])
-def ingredients_filter(user_id):
+@app.route('/ingredients', methods=['GET', 'POST'])
+def ingredients_filter(user_id=None):
     """按食材筛选菜谱"""
+    # 优先使用session中的用户ID
+    if user_id is None:
+        user_id = session.get('user_id')
+    
+    # 如果没有用户ID，重定向到登录页
+    if user_id is None:
+        flash('请先登录！', 'error')
+        return redirect(url_for('login'))
     grouped_ingredients = get_all_ingredients(user_id)
     filtered_recipes = []
     selected_ingredients = []

@@ -12,7 +12,7 @@
                     <small class="text-muted">(共 {{ recipes|length }} 道菜)</small>
                 {% endif %}
             </h1>
-            <a href="{{ url_for('add_recipe', user_id=user_id) }}" class="btn btn-primary btn-lg">
+            <a href="{{ url_for('add_recipe') }}" class="btn btn-primary btn-lg">
                 <i class="fas fa-plus me-2"></i>添加新菜谱
             </a>
         </div>
@@ -20,7 +20,7 @@
         <!-- 搜索框和食材筛选 -->
         <div class="row mb-4">
             <div class="col-md-8 mx-auto">
-                <form method="GET" action="{{ url_for('index', user_id=user_id) }}">
+                <form method="GET" action="{{ url_for('index') }}">
                     <div class="input-group input-group-lg">
                         <input type="text" class="form-control" name="search" 
                                placeholder="搜索菜谱或材料..." value="{{ search_query }}">
@@ -29,7 +29,7 @@
                             <i class="fas fa-search"></i>
                         </button>
                         {% if search_query %}
-                            <a href="{{ url_for('index', user_id=user_id, season=season_filter) }}" class="btn btn-outline-secondary">
+                            <a href="{{ url_for('index', season=season_filter) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times"></i>
                             </a>
                         {% endif %}
@@ -39,23 +39,23 @@
                 <!-- 季节筛选 -->
                 <div class="d-flex justify-content-center mt-3 mb-2">
                     <div class="btn-group" role="group">
-                        <a href="{{ url_for('index', user_id=user_id, search=search_query) }}" 
+                        <a href="{{ url_for('index', search=search_query) }}" 
                            class="btn btn-sm {% if not season_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">
                             全部
                         </a>
-                        <a href="{{ url_for('index', user_id=user_id, search=search_query, season='春季') }}" 
+                        <a href="{{ url_for('index', search=search_query, season='春季') }}" 
                            class="btn btn-sm {% if season_filter == '春季' %}btn-success{% else %}btn-outline-success{% endif %}">
                             🌸 春季
                         </a>
-                        <a href="{{ url_for('index', user_id=user_id, search=search_query, season='夏季') }}" 
+                        <a href="{{ url_for('index', search=search_query, season='夏季') }}" 
                            class="btn btn-sm {% if season_filter == '夏季' %}btn-info{% else %}btn-outline-info{% endif %}">
                             ☀️ 夏季
                         </a>
-                        <a href="{{ url_for('index', user_id=user_id, search=search_query, season='秋季') }}" 
+                        <a href="{{ url_for('index', search=search_query, season='秋季') }}" 
                            class="btn btn-sm {% if season_filter == '秋季' %}btn-warning{% else %}btn-outline-warning{% endif %}">
                             🍂 秋季
                         </a>
-                        <a href="{{ url_for('index', user_id=user_id, search=search_query, season='冬季') }}" 
+                        <a href="{{ url_for('index', search=search_query, season='冬季') }}" 
                            class="btn btn-sm {% if season_filter == '冬季' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
                             ❄️ 冬季
                         </a>
@@ -64,10 +64,10 @@
                 
                 <!-- 快捷入口 -->
                 <div class="text-center">
-                    <a href="{{ url_for('ingredients_filter', user_id=user_id) }}" class="btn btn-outline-success me-2">
+                    <a href="{{ url_for('ingredients_filter') }}" class="btn btn-outline-success me-2">
                         <i class="fas fa-carrot me-1"></i>按食材筛选
                     </a>
-                    <a href="{{ url_for('seasonal_recommendation', user_id=user_id) }}" class="btn btn-outline-warning me-2">
+                    <a href="{{ url_for('seasonal_recommendation') }}" class="btn btn-outline-warning me-2">
                         <i class="fas fa-leaf me-1"></i>应季推荐
                     </a>
                     <small class="text-muted">当前季节：<span class="badge bg-primary">{{ current_season }}</span></small>
@@ -82,7 +82,7 @@
         {% elif search_query and not recipes %}
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle me-2"></i>没有找到包含 "{{ search_query }}" 的菜谱
-                <a href="{{ url_for('index', user_id=user_id) }}" class="btn btn-sm btn-outline-primary ms-2">查看所有菜谱</a>
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-primary ms-2">查看所有菜谱</a>
             </div>
         {% endif %}
 
@@ -154,11 +154,11 @@
                         
                         <div class="card-footer bg-transparent border-top-0">
                             <div class="d-flex justify-content-between">
-                                <a href="{{ url_for('view_recipe', user_id=user_id, recipe_id=recipe.id) }}" 
+                                <a href="{{ url_for('view_recipe', recipe_id=recipe.id) }}" 
                                    class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye me-1"></i>查看详情
                                 </a>
-                                <form method="POST" action="{{ url_for('delete_recipe', user_id=user_id, recipe_id=recipe.id) }}" 
+                                <form method="POST" action="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" 
                                       style="display: inline;" 
                                       onsubmit="return confirm('确定要删除菜谱《{{ recipe.name }}》吗？')">
                                     <button type="submit" class="btn btn-outline-danger btn-sm">
@@ -183,7 +183,7 @@
                     <div class="mb-3">
                         <small class="text-muted">👋 当前用户：<span class="badge bg-primary">{{ user_id }}</span></small>
                     </div>
-                    <a href="{{ url_for('add_recipe', user_id=user_id) }}" class="btn btn-primary btn-lg">
+                    <a href="{{ url_for('add_recipe') }}" class="btn btn-primary btn-lg">
                         <i class="fas fa-plus me-2"></i>添加第一道菜
                     </a>
                 </div>
